@@ -9,26 +9,35 @@ command: code
 tags: [proprietary]
 separate-locales: false
 finish-args:
-  - --require-version=0.10.3
+  # Share
+  - --share=network
   - --share=ipc
+  # Socket
   - --socket=x11
   - --socket=pulseaudio
   - --socket=ssh-auth
-  - --share=network
+  # Device
   - --device=all
-  - --filesystem=xdg-config/gtk-3.0
-  - --filesystem=host
+  # Allow
   - --allow=devel
-  - --talk-name=org.freedesktop.Notifications
-  - --talk-name=org.freedesktop.secrets
-  - --talk-name=org.freedesktop.Flatpak
+  # Filesystem
+  - --filesystem=host
+  - --filesystem=xdg-config/gtk-3.0
+  - --filesystem=xdg-config/kdeglobals:ro
+  # Persistent
+  # Environment
   - --env=NPM_CONFIG_GLOBALCONFIG=/app/etc/npmrc
   - --env=LD_LIBRARY_PATH=/app/lib
   - --env=ZYPAK_SPAWN_LATEST_ON_REEXEC=0
-  - --filesystem=xdg-config/kdeglobals:ro
+  # System Bus
+  - --system-talk-name=org.freedesktop.login1
+  # Session bus
+  - --talk-name=org.freedesktop.secrets
   - --talk-name=com.canonical.AppMenu.Registrar
   - --talk-name=com.canonical.AppMenu.Registrar.*
-  - --system-talk-name=org.freedesktop.login1
+  - --talk-name=org.freedesktop.Notifications
+  - --talk-name=org.freedesktop.Flatpak
+  # Portals
 add-extensions:
   com.visualstudio.code.tool:
     directory: tools
@@ -42,7 +51,6 @@ cleanup:
   - /share/gtk-doc
   - '*.la'
 modules:
-
   - shared-modules/libsecret/libsecret.json
 
   - shared-modules/libusb/libusb.json
@@ -50,7 +58,6 @@ modules:
   - name: vscode
     buildsystem: simple
     build-commands:
-      - install -D code.sh /app/bin/code
       - install -Dm644 vscode_64.png /app/share/icons/hicolor/64x64/apps/com.visualstudio.code.png
       - install -Dm644 vscode_128.png /app/share/icons/hicolor/128x128/apps/com.visualstudio.code.png
       - install -Dm644 vscode_256.png /app/share/icons/hicolor/256x256/apps/com.visualstudio.code.png
@@ -75,8 +82,6 @@ modules:
           - tar xf data.tar.xz
           - mv usr/share/code vscode
           - rm -r code.deb control.tar.* data.tar.xz debian-binary usr
-      - type: file
-        path: code.sh
       - type: file
         path: flatpak-warning.txt
       - type: file
@@ -138,6 +143,38 @@ modules:
   - name: zypak
     sources:
       - type: git
-        url: https://github.com/refi64/zypak
+        url: https://github.com/refi64/zypak.git
         tag: v2022.04
         commit: 55a60d110301e8dd37b631503c3524ab7baaf7aa
+
+  - name: ide-flatpak-wrapper
+    buildsystem: meson
+    config-opts:
+      - -Deditor_binary=/app/extra/vscode/bin/code
+      - -Dprogram_name=code
+      - -Deditor_title=Visual Studio Code
+      - >-
+        -Deditor_args=[
+        '/app/extra/vscode/resources/app/out/cli.js',
+        '--ms-enable-electron-run-as-node',
+        '--extensions-dir', '$XDG_DATA_HOME/vscode/extensions'
+        ]
+      - -Dzypak=enabled
+      - >-
+        -Denvs=[
+        "ELECTRON_RUN_AS_NODE=1"
+        ]
+      - >-
+        -Denvs_inner=[
+        "ZYPAK_SPAWN_LATEST_ON_REEXEC=0",
+        ]
+      - -Dfirst_run_template=flatpak-warning.txt
+      - -Dsdk_update_template=sdk_update.txt
+      - -Dflagfile_prefix=flatpak-vscode
+    sources:
+      - type: git
+        url: https://github.com/flathub/ide-flatpak-wrapper.git
+        branch: zypak
+        commit: 019611a2b0d3cefed705c3da2f4ff098fdde1cfc
+      - type: file
+        path: flatpak-warning.txt
