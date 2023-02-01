@@ -21,14 +21,14 @@ finish-args:
   # Allow
   - --allow=devel
   # Filesystem
-  - --filesystem=host
+  - --filesystem=home
   - --filesystem=xdg-config/gtk-3.0
   - --filesystem=xdg-config/kdeglobals:ro
   # Persistent
+  - --persist=.vscode
   # Environment
   - --env=NPM_CONFIG_GLOBALCONFIG=/app/etc/npmrc
   - --env=LD_LIBRARY_PATH=/app/lib
-  - --env=ZYPAK_SPAWN_LATEST_ON_REEXEC=0
   # System Bus
   - --system-talk-name=org.freedesktop.login1
   # Session bus
@@ -67,9 +67,7 @@ modules:
       - install -Dm644 com.visualstudio.code-url-handler.desktop -t /app/share/applications
       - install -Dm644 com.visualstudio.code-workspace.xml -t /app/share/mime/packages
       - install -Dm644 npmrc -t /app/etc
-      - install -Dm644 flatpak-warning.txt -t /app/share/vscode
       - install -D apply_extra -t /app/bin
-      - cp /usr/bin/ar /app/bin
       - ARCH_TRIPLE=$(gcc --print-multiarch) && cp /usr/lib/${ARCH_TRIPLE}/libbfd-*.so
         /app/lib
       - ARCH_TRIPLE=$(gcc --print-multiarch) && ln -s /usr/lib/${ARCH_TRIPLE}/libtinfo.so/app/lib/libtinfo.so.5
@@ -129,28 +127,10 @@ modules:
           dist: stable
           component: main
 
-  - name: kerberos
-    subdir: src
-    post-install:
-      - install -Dm644 ../krb5.conf /app/etc/krb5.conf
-    sources:
-      - type: archive
-        url: https://kerberos.org/dist/krb5/1.20/krb5-1.20.tar.gz
-        sha256: 7e022bdd3c851830173f9faaa006a230a0e0fdad4c953e85bff4bf0da036e12f
-      - type: file
-        path: krb5.conf
-
-  - name: zypak
-    sources:
-      - type: git
-        url: https://github.com/refi64/zypak.git
-        tag: v2022.04
-        commit: 55a60d110301e8dd37b631503c3524ab7baaf7aa
-
   - name: ide-flatpak-wrapper
     buildsystem: meson
     config-opts:
-      - -Deditor_binary=/app/extra/vscode/bin/code
+      - -Deditor_binary=/app/extra/vscode/code
       - -Dprogram_name=code
       - -Deditor_title=Visual Studio Code
       - >-
